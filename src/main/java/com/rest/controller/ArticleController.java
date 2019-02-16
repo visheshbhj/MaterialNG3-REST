@@ -2,6 +2,7 @@ package com.rest.controller;
 
 import java.util.List;
 
+import com.rest.repository.ArticleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,42 +20,43 @@ import com.rest.service.ArticleService;
 
 @RestController
 public class ArticleController {
-	
 	@Autowired
 	private ArticleService articleService;
-	
+	@Autowired
+	private ArticleRepository articleRepo;
+
 	@PostMapping(value="/rest/api/articles")
 	public Article create(@RequestBody Article body) {
-		Article convertedBody = new Article(body);
-		Article article = articleService.createArticle(convertedBody);
-		return article;
+		return articleService.createArticle(body);
 	}
 	
 	@GetMapping(value="/rest/api/articles")
 	public @ResponseBody List<Article> getAllArticles() {
-		List<Article> article = articleService.findAllArticles();
-		return article;
+		return articleService.findAllArticles();
 	}
 	
 	@GetMapping(value="/rest/api/articles/{id}")
-	public @ResponseBody Article getOneArticles(@PathVariable String id) {
+	public @ResponseBody ResponseEntity getOneArticles(@PathVariable String id) {
 		Article articlePOJO = new Article(id);
-		Article article = articleService.findOneArticles(articlePOJO.getId());
-		return article;
+		if (articleRepo.existsById(articlePOJO.getId())) {
+			return new ResponseEntity<Article>(articleService.findOneArticles(articlePOJO.getId()), HttpStatus.OK);
+		}else{
+			return new ResponseEntity<Article>(HttpStatus.NOT_FOUND);
+		}
 	}
 	
 	@DeleteMapping(value="/rest/api/articles/{id}")
-	public ResponseEntity<Article> deleteArticle(@PathVariable String id) {
+	public ResponseEntity deleteArticle(@PathVariable String id) {
 		try {
 			articleService.deleteOneArticle(id);
-			return new ResponseEntity<Article>(HttpStatus.ACCEPTED);
+			return new ResponseEntity(HttpStatus.ACCEPTED);
 		}catch (Exception e) {
-			return new ResponseEntity<Article>(HttpStatus.CONFLICT);
+			return new ResponseEntity(HttpStatus.CONFLICT);
 		}
 	}
 	
 	@PutMapping(value="/rest/api/articles/{id}")
-	public @ResponseBody ResponseEntity<Article> editArticle(@PathVariable String id,@RequestBody Article modified) {
+	public @ResponseBody ResponseEntity editArticle(@PathVariable String id,@RequestBody Article modified) {
 		Article actual = articleService.findOneArticles(id);
 		
 		if(modified.getTitle()!=null&&!modified.getTitle().isEmpty()) {
@@ -69,7 +71,7 @@ public class ArticleController {
 			}
 		}
 		
-		return new ResponseEntity<Article>(articleService.editOneArticle(actual),HttpStatus.OK);
+		return new ResponseEntity<>(articleService.editOneArticle(actual), HttpStatus.OK);
 	}
 	
 }
