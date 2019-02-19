@@ -1,5 +1,6 @@
 package com.rest.controller;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.rest.repository.ArticleRepository;
@@ -25,17 +26,17 @@ public class ArticleController {
 	@Autowired
 	private ArticleRepository articleRepo;
 
-	@PostMapping(value="/rest/api/articles")
+	@PostMapping(value="/articles")
 	public Article create(@RequestBody Article body) {
 		return articleService.createArticle(body);
 	}
 	
-	@GetMapping(value="/rest/api/articles")
+	@GetMapping(value="/articles")
 	public @ResponseBody List<Article> getAllArticles() {
 		return articleService.findAllArticles();
 	}
 	
-	@GetMapping(value="/rest/api/articles/{id}")
+	@GetMapping(value="/articles/{id}")
 	public @ResponseBody ResponseEntity getOneArticles(@PathVariable String id) {
 		Article articlePOJO = new Article(id);
 		if (articleRepo.existsById(articlePOJO.getId())) {
@@ -45,7 +46,7 @@ public class ArticleController {
 		}
 	}
 	
-	@DeleteMapping(value="/rest/api/articles/{id}")
+	@DeleteMapping(value="/articles/{id}")
 	public ResponseEntity deleteArticle(@PathVariable String id) {
 		try {
 			articleService.deleteOneArticle(id);
@@ -55,7 +56,7 @@ public class ArticleController {
 		}
 	}
 	
-	@PutMapping(value="/rest/api/articles/{id}")
+	@PutMapping(value="/articles/{id}")
 	public @ResponseBody ResponseEntity editArticle(@PathVariable String id,@RequestBody Article modified) {
 		Article actual = articleService.findOneArticles(id);
 		
@@ -70,7 +71,7 @@ public class ArticleController {
 				actual.setArticleBody(modified.getArticleBody());
 			}
 		}
-		
+		actual.setLastModifiedDate(LocalDateTime.now().toString());
 		return new ResponseEntity<>(articleService.editOneArticle(actual), HttpStatus.OK);
 	}
 	
