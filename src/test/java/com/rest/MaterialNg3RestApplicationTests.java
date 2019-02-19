@@ -2,8 +2,10 @@ package com.rest;
 
 import com.google.gson.Gson;
 import com.rest.model.Article;
+import com.rest.utility.CommonUtils;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
+import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -22,15 +24,14 @@ import java.util.Map;
 
 public class MaterialNg3RestApplicationTests {
 	private String URI = "https://materialng3.herokuapp.com/";
-	private Map<String,String> credentials;
 	private static Map<String,String> cookie;
 	private Response response;
 	private Gson gson = new Gson();
-	private String id,DateNow;
-
+	private static String id,DateNow;
+	private static Map<String,String> data = new HashMap<>();
 	@Test
 	public void A_loginTest() {
-		credentials = new HashMap<>();
+		Map<String,String> credentials = new HashMap<>();
 		cookie = new HashMap<>();
 		credentials.put("username", "admin");
 		credentials.put("password", "rdt_user");
@@ -43,15 +44,18 @@ public class MaterialNg3RestApplicationTests {
 	@Test
 	public void B_createArticleTest(){
 		DateNow = LocalDate.now().toString();
-		HashMap<String,String> data = new HashMap<>();
-		data.put("title","Test_Title");
-		data.put("articleBody","Test_Body");
+
+		data.put("title", CommonUtils.getRandomString(5));
+		data.put("articleBody",CommonUtils.getRandomString(50));
 		data.put("createdDate",DateNow);
 		data.put("lastModifiedDate",DateNow);
-		data.put("commentList","");
+		//data.put("commentList","");
 		data.put("auther","admin");
 
-		response = RestAssured.given().baseUri(URI).cookies(cookie).post("/articles",data);
+		JSONObject jobject = new JSONObject(data);
+		System.out.println(jobject.toString());
+		response = RestAssured.given().header("Content-Type","application/json")
+				.baseUri(URI).cookies(cookie).body(jobject.toString()).post("/articles");
 		Article article = gson.fromJson(response.getBody().asString(),Article.class);
 		System.out.println("Id of Article is "+article.getId());
 		id = article.getId();
@@ -64,31 +68,32 @@ public class MaterialNg3RestApplicationTests {
 		response = RestAssured.given().baseUri(URI).cookies(cookie).get("/articles/"+id);
 		Article article = gson.fromJson(response.getBody().asString(),Article.class);
 
-		Assert.assertSame(article.getTitle(),"Test_Title");
-		Assert.assertSame(article.getArticleBody(),"Test_Body");
+		Assert.assertSame(article.getTitle(),data.get("title"));
+		Assert.assertSame(article.getArticleBody(),data.get("articleBody"));
 		Assert.assertSame(article.getCreatedDate(),DateNow);
 		Assert.assertSame(article.getLastModifiedDate(),DateNow);
 		Assert.assertSame(article.getAuther(),"admin");
-		Assert.assertNull(article.getCommentList());
+		//Assert.assertNull(article.getCommentList());
 	}
 
 	@Test
 	public void D_editArticleTest(){
 
 		DateNow = LocalDate.now().toString();
-		HashMap<String,String> data = new HashMap<>();
-		data.put("title","Test_Title_1");
-		data.put("articleBody","Test_Body_1");
+
+		data.put("title", CommonUtils.getRandomString(5));
+		data.put("articleBody",CommonUtils.getRandomString(50));
 		data.put("createdDate",DateNow);
 		data.put("lastModifiedDate",DateNow);
-		data.put("commentList","");
+		//data.put("commentList","");
 		data.put("auther","admin_1");
 
-		response = RestAssured.given().baseUri(URI).cookies(cookie).put("/articles/"+id,data);
+		response = RestAssured.given().baseUri(URI).header("Content-Type","application/json")
+				.cookies(cookie).body(data).put("/articles/"+id);
 		Article article = gson.fromJson(response.getBody().asString(),Article.class);
 
-		Assert.assertSame(article.getTitle(),"Test_Title_1");
-		Assert.assertSame(article.getArticleBody(),"Test_Body_1");
+		Assert.assertSame(article.getTitle(),data.get("title"));
+		Assert.assertSame(article.getArticleBody(),data.get("articleBody"));
 		Assert.assertSame(article.getCreatedDate(),DateNow);
 		Assert.assertSame(article.getLastModifiedDate(),DateNow);
 		Assert.assertSame(article.getAuther(),"admin_1");
@@ -97,6 +102,7 @@ public class MaterialNg3RestApplicationTests {
 	@Test
 	public void E_deleteArticleTest(){
 		response = RestAssured.given().baseUri(URI).cookies(cookie).delete("/articles/"+id);
+
 		if (response.getStatusCode() != 202) {
 			Assert.fail("Response Was "+response.getStatusCode());
 		}
