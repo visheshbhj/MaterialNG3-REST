@@ -16,8 +16,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.env.Environment;
 import org.springframework.util.Assert;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,11 +27,12 @@ public class MaterialNg3RestApplicationTests {
 	@Autowired
 	static Environment environment;
 
-	private static String URI = "https://materialng3.herokuapp.com/";//http://localhost:8080
+	private static String URI = "https://materialng3.herokuapp.com/";
+	//private static String URI = "http://localhost:8080/";
 	private static Map<String,String> cookie;
 	private Response response;
 	private Gson gson = new Gson();
-	private static String id,DateNow;
+	private static String id;
 	private static Map<String,String> data = new HashMap<>();
 
 	/*@BeforeClass
@@ -55,14 +54,10 @@ public class MaterialNg3RestApplicationTests {
 
 	@Test
 	public void B_createArticleTest(){
-		DateNow = LocalDateTime.now().toString();
 
 		data.put("title", CommonUtils.getRandomString(5));
 		data.put("articleBody",CommonUtils.getRandomString(50));
-		data.put("createdDate",DateNow);
-		data.put("lastModifiedDate",DateNow);
-		//data.put("commentList","");
-		data.put("auther","admin");
+		data.put("author","admin");
 
 		JSONObject jobject = new JSONObject(data);
 		System.out.println(jobject.toString());
@@ -71,7 +66,8 @@ public class MaterialNg3RestApplicationTests {
 		Article article = gson.fromJson(response.getBody().asString(),Article.class);
 		System.out.println("Id of Article is "+article.getId());
 		id = article.getId();
-		Assert.notNull(article,"Article Was Not Generated");
+		Assert.notNull(article.getId(),"Article Was Not Generated");
+
 	}
 
 
@@ -82,10 +78,11 @@ public class MaterialNg3RestApplicationTests {
 
 		Assert.isTrue(article.getTitle().equalsIgnoreCase(data.get("title")),"Title Not Equal");
 		Assert.isTrue(article.getArticleBody().equalsIgnoreCase(data.get("articleBody")),"Artical Body Not Equal");
-		Assert.isTrue(article.getCreatedDate().equalsIgnoreCase(DateNow),"Created Date Not Same");
-		Assert.isTrue(article.getLastModifiedDate().equalsIgnoreCase(DateNow),"Modified Date Not Same");
-		Assert.isTrue(article.getAuther().equalsIgnoreCase("admin"),"Author Not Same");
+		//Assert.isTrue(article.getCreatedDate().equalsIgnoreCase(DateNow),"Created Date Not Same");
+		//Assert.isTrue(article.getLastModifiedDate().equalsIgnoreCase(DateNow),"Modified Date Not Same");
+		Assert.isTrue(article.getAuthor().equalsIgnoreCase("admin"),"Author Not Same");
 		//Assert.assertNull(article.getCommentList());
+		data.clear();
 	}
 
 	@Test
@@ -94,12 +91,10 @@ public class MaterialNg3RestApplicationTests {
 		response = RestAssured.given().baseUri(URI).cookies(cookie).get("/articles/"+id);
 		Article oldArticle = gson.fromJson(response.getBody().asString(),Article.class);
 
-		DateNow = LocalDateTime.now().toString();
-
 		data.put("title", CommonUtils.getRandomString(5));
 		data.put("articleBody",CommonUtils.getRandomString(50));
 		//data.put("commentList","");
-		data.put("auther","admin_1");
+		data.put("author","admin_1");
 
 		response = RestAssured.given().baseUri(URI).header("Content-Type","application/json")
 				.cookies(cookie).body(data).put("/articles/"+id);
@@ -108,7 +103,7 @@ public class MaterialNg3RestApplicationTests {
 		Assert.isTrue(article.getTitle().equalsIgnoreCase(data.get("title")),"Title Not Equal");
 		Assert.isTrue(article.getArticleBody().equalsIgnoreCase(data.get("articleBody")),"Artical Body Not Equal");
 		Assert.isTrue(!oldArticle.getLastModifiedDate().equalsIgnoreCase(article.getLastModifiedDate()),"Modified Date Same");
-		Assert.isTrue(!oldArticle.getAuther().equalsIgnoreCase("admin_1"),"Author Same");
+		Assert.isTrue(!oldArticle.getAuthor().equalsIgnoreCase("admin_1"),"Author Same");
 	}
 
 	@Test
