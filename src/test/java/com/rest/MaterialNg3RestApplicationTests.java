@@ -2,6 +2,7 @@ package com.rest;
 
 import com.google.gson.Gson;
 import com.rest.model.Article;
+import com.rest.model.Comment;
 import com.rest.utility.CommonUtils;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
@@ -16,8 +17,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.env.Environment;
 import org.springframework.util.Assert;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @RunWith(JUnit4.class)
 @SpringBootTest
@@ -93,7 +94,6 @@ public class MaterialNg3RestApplicationTests {
 
 		data.put("title", CommonUtils.getRandomString(5));
 		data.put("articleBody",CommonUtils.getRandomString(50));
-		//data.put("commentList","");
 		data.put("author","admin_1");
 
 		response = RestAssured.given().baseUri(URI).header("Content-Type","application/json")
@@ -110,5 +110,82 @@ public class MaterialNg3RestApplicationTests {
 	public void E_deleteArticleTest(){
 		response = RestAssured.given().baseUri(URI).cookies(cookie).delete("/articles/"+id);
 		Assert.isTrue(response.getStatusCode() == 202,"Response Was "+response.getStatusCode());
+	}
+
+	@Test
+	public void F_commentInArticleTest(){
+		data.put("title", CommonUtils.getRandomString(5));
+		data.put("articleBody",CommonUtils.getRandomString(50));
+		data.put("author","admin");
+
+		JSONObject jobject = new JSONObject(data);
+		System.out.println(jobject.toString());
+
+		response = RestAssured.given().header("Content-Type","application/json")
+				.baseUri(URI).cookies(cookie).body(jobject.toString()).post("/articles");
+
+		Article article = gson.fromJson(response.getBody().asString(),Article.class);
+
+		System.out.println("Id of Article is "+article.getId());
+		AtomicBoolean flag = new AtomicBoolean(false);
+		HashMap<String,String> commentData = new HashMap<>();
+
+		//Lets Create Couple Of Comments
+		for(int count = 0; count<3;count++){
+			flag.set(false);
+			commentData.put("userName",CommonUtils.getRandomString(15));
+			commentData.put("comment",CommonUtils.getRandomString(15));
+
+			JSONObject jObject = new JSONObject(commentData);
+			System.out.println(jObject.toString());
+			response = RestAssured.given().header("Content-Type","application/json")
+					.baseUri(URI).cookies(cookie).body(jObject.toString()).post("/articles/"+article.getId()+"/comment");
+
+			Assert.isTrue(response.getStatusCode()==200,"Issues in Posting Comment, Code Was "+response.getStatusCode());
+
+			article = gson.fromJson(response.getBody().asString(),Article.class);
+
+			for (Comment generated_comment : article.getCommentList()) {
+				System.err.println(generated_comment.getId());
+				if (generated_comment.getUserName().equals(commentData.get("userName")) && generated_comment.getComment().equals(commentData.get("comment"))) {
+					flag.set(true);
+					break;
+				}
+			}
+
+			Assert.isTrue(flag.get(),"Something Wrong At Itr "+count);
+		}
+
+		//Now Using Random Generator Select any Comment & Modify it
+
+		response = RestAssured.given().header("Content-Type","application/json")
+				.baseUri(URI).cookies(cookie).get("/articles/"+article.getId());
+
+		article = gson.fromJson(response.getBody().asString(),Article.class);
+
+		Random random = new Random();
+		int index = random.nextInt(article.getCommentList().size());
+		Comment newComment = article.getCommentList().get(index);
+		data.clear();
+		data.put("comment",CommonUtils.getRandomString(15));
+
+		response = RestAssured.given().header("Content-Type","application/json")
+				.baseUri(URI).cookies(cookie).body(data).put("/articles/"+article.getId()+"/comment/"+newComment.getId());
+
+		article = gson.fromJson(response.getBody().asString(),Article.class);
+		Assert.isTrue(article.getCommentList().get(index).getComment().equals(data.get("comment")),"Unable To Edit");
+
+
+		//Now We Delete Random Comment
+		index = random.nextInt(article.getCommentList().size());
+		newComment = article.getCommentList().get(index);
+
+		response = RestAssured.given().header("Content-Type","application/json")
+				.baseUri(URI).cookies(cookie).delete("/articles/"+article.getId()+"/comment/"+newComment.getId());
+
+		Assert.isTrue(response.statusCode()==200,"Comment Delete Not Successful");
+
+		response = RestAssured.given().baseUri(URI).cookies(cookie).delete("/articles/"+article.getId());
+		Assert.isTrue(response.getStatusCode() == 202,"Delete Article Response Was "+response.getStatusCode());
 	}
 }
