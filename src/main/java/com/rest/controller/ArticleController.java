@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.rest.repository.ArticleRepository;
+import com.rest.utility.CommonUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +29,8 @@ public class ArticleController {
 
 	@PostMapping(value="/articles")
 	public Article create(@RequestBody Article body) {
+		body.setCreatedDate(CommonUtils.standardFormattedDateTime(LocalDateTime.now()));
+		body.setLastModifiedDate(CommonUtils.standardFormattedDateTime(LocalDateTime.now()));
 		return articleService.createArticle(body);
 	}
 	
@@ -71,7 +74,14 @@ public class ArticleController {
 				actual.setArticleBody(modified.getArticleBody());
 			}
 		}
-		actual.setLastModifiedDate(LocalDateTime.now().toString());
+
+		if(modified.getAuthor()!=null&&!modified.getAuthor().isEmpty()) {
+			if (!actual.getAuthor().equalsIgnoreCase(modified.getAuthor())) {
+				actual.setAuthor(modified.getAuthor());
+			}
+		}
+
+		actual.setLastModifiedDate(CommonUtils.standardFormattedDateTime(LocalDateTime.now()));
 		return new ResponseEntity<>(articleService.editOneArticle(actual), HttpStatus.OK);
 	}
 	

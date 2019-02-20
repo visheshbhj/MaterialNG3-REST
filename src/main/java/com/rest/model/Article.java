@@ -3,6 +3,7 @@ package com.rest.model;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.rest.utility.CommonUtils;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -13,7 +14,7 @@ public class Article {
 	private String id;
 	private String title;
 	private String articleBody;
-	private String auther;
+	private String author;
 	private String createdDate;
 	private String lastModifiedDate;
 	private List<Comment> commentList;
@@ -62,38 +63,38 @@ public class Article {
 	public void setArticleBody(String articleBody) {
 		this.articleBody = articleBody;
 	}
-	public String getAuther() {
-		return auther;
+	public String getAuthor() {
+		return author;
 	}
-	public void setAuther(String auther) {
-		this.auther = auther;
+	public void setAuthor(String author) {
+		this.author = author;
 	}
-	
+
 	public Article() {
-		
+
 	}
 	
 	public Article(String id) {
 		this.id = id;
 	}
-	
-	public Article(String title, String articleBody,String auther) {
+
+	public Article(String title, String articleBody,String author) {
 		this.title = title;
 		this.articleBody = articleBody;
-		this.auther = auther;
+		this.author = author;
 	}
-	
+
 	public Article(Article article) {
 		this.title = article.title;
 		this.articleBody = article.articleBody;
-		this.auther = article.auther;
-		this.createdDate = LocalDateTime.now().toString();
-		this.lastModifiedDate = null;
-		commentList = null;
+		this.author = article.author;
+		this.createdDate = article.getCreatedDate();
+		this.lastModifiedDate = article.getLastModifiedDate();
+		commentList = article.getCommentList();
 	}
 	
 	@Override
 	public String toString() {
-		return this.id+" "+this.title +" "+this.articleBody +" "+this.auther;
+		return this.id+" "+this.title +" "+this.articleBody +" "+this.author;
 	}
 }
