@@ -3,6 +3,7 @@ package com.rest.controller;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.rest.model.Comment;
 import com.rest.repository.ArticleRepository;
 import com.rest.utility.CommonUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,7 @@ public class ArticleController {
 	public Article create(@RequestBody Article body) {
 		body.setCreatedDate(CommonUtils.standardFormattedDateTime(LocalDateTime.now()));
 		body.setLastModifiedDate(CommonUtils.standardFormattedDateTime(LocalDateTime.now()));
+		body.setComment();
 		return articleService.createArticle(body);
 	}
 	
@@ -84,5 +86,4 @@ public class ArticleController {
 		actual.setLastModifiedDate(CommonUtils.standardFormattedDateTime(LocalDateTime.now()));
 		return new ResponseEntity<>(articleService.editOneArticle(actual), HttpStatus.OK);
 	}
-	
 }

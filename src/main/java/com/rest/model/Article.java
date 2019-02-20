@@ -1,6 +1,7 @@
 package com.rest.model;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.rest.utility.CommonUtils;
@@ -23,8 +24,12 @@ public class Article {
 		return commentList;
 	}
 
-	public void setCommentList(List<Comment> commentList) {
-		this.commentList = commentList;
+	public void setComment(Comment comment) {
+		this.commentList.add(comment);
+	}
+
+	public void setComment() {
+		this.commentList = new ArrayList<Comment>();
 	}
 
 	public String getLastModifiedDate() {
