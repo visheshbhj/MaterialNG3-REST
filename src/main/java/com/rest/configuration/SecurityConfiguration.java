@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -17,58 +18,57 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @EnableWebSecurity
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
- @Autowired
- private UserService userService;
+    @Autowired
+    private UserService userService;
 
- @Override
- protected void configure(HttpSecurity http) throws Exception {
-  http.cors().and().csrf().disable();
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http.cors().and().csrf().disable();
 
-  http.authorizeRequests()
-      .antMatchers("/login*").permitAll()
-      .anyRequest().authenticated()
-      .and()
-      .formLogin().permitAll();
-      //.loginProcessingUrl("/login")
-      //.defaultSuccessUrl("/browser",true).successForwardUrl("/browser").failureForwardUrl("/login")
-      //.permitAll();
+        http.httpBasic()
+                .and()
+                .authorizeRequests()
+                .antMatchers("/login").permitAll()
+                .anyRequest().authenticated()
 
-     /*http.formLogin()
-             .loginProcessingUrl("/login")
-             .defaultSuccessUrl("/browser/index.html",true)
-             .failureUrl("/login?error=true")
-     .and().authenticationProvider(authenticationProvider()).userDetailsService(userService).httpBasic();*/
- }
+                .and()
+                .formLogin()
+                .usernameParameter("username")
+                .passwordParameter("password")
+                .permitAll();
+    }
 
- @Override
- protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-  auth.userDetailsService(userService).passwordEncoder(passwordEncoder());
-  auth.inMemoryAuthentication()
-             .withUser("admin").password(passwordEncoder().encode("rdt_user"))
-             .authorities("Admin");
- }
+    //@Override
+    @Autowired
+    protected void configureGlobal(final AuthenticationManagerBuilder auth) throws Exception {
+        auth.userDetailsService(userService).passwordEncoder(passwordEncoder());
+        //auth.inMemoryAuthentication().withUser("admin").password(passwordEncoder().encode("rdt_user")).authorities("Admin");
+    }
 
-/* @Autowired
- protected void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-  auth.inMemoryAuthentication()
-          .withUser("user").password(passwordEncoder().encode("user"))
-          .authorities("ROLE_USER");
+    @Bean
+    @Override
+    public AuthenticationManager authenticationManagerBean() throws Exception {
+        return super.authenticationManagerBean();
+    }
 
- }*/
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new PasswordEncoder() {
+            @Override
+            public String encode(CharSequence rawPassword) {
+                return rawPassword.toString();
+            }
 
- @Bean
- public PasswordEncoder passwordEncoder() {
-  return new PasswordEncoder() {
-      @Override
-      public String encode(CharSequence rawPassword) {
-          return rawPassword.toString();
-      }
+            @Override
+            public boolean matches(CharSequence rawPassword, String encodedPassword) {
+                return rawPassword.equals(encodedPassword);
+            }
+        };
+    }
 
-      @Override
-      public boolean matches(CharSequence rawPassword, String encodedPassword) {
-          return true;
-      }
-  };
- }
+   /* @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(10);
+    }*/
 
 }
