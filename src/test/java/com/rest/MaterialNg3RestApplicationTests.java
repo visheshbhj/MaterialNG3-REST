@@ -45,8 +45,8 @@ public class MaterialNg3RestApplicationTests {
 	public void A_loginTest() {
 		Map<String,String> credentials = new HashMap<>();
 		cookie = new HashMap<>();
-		credentials.put("username", "admin");
-		credentials.put("password", "rdt_user");
+		credentials.put("username", "junit_test_user");
+		credentials.put("password", "junit_test");
 
 		response = RestAssured.given().baseUri(URI).formParams(credentials).post("/login");
 		cookie.putAll(response.getCookies());
