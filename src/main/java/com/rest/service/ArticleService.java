@@ -38,5 +38,8 @@ public class ArticleService {
 	public Article editOneArticle(Article article) {
 		return articleRepo.save(article);
 	}
-	
+
+	public boolean checkArticleExistsById(String id) {
+		return articleRepo.existsById(id);
+	}
 }
